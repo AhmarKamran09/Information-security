@@ -241,11 +241,7 @@ def main():
     print("="*60)
     print(f"\nModel saved: {args.model_output}")
     print(f"Best model: {best_model_name}")
-    print(f"Expected performance (from paper):")
-    print(f"  Accuracy:  ~95%")
-    print(f"  Precision: ~93-96%")
-    print(f"  Recall:    ~93-95%")
-    print(f"  F1 Score:  ~94-95%")
+
 
 
 if __name__ == '__main__':

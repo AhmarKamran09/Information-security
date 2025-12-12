@@ -12,8 +12,8 @@ def map_uci_to_phishhook_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Map UCI dataset features to Phish-Hook F1-F8 features.
     
-    This mapping is based on semantic similarity between UCI features
-    and Phish-Hook feature definitions.
+    Improved mapping using multiple UCI features in sophisticated combinations
+    to better approximate the domain-level F1-F8 features.
     
     Args:
         df: DataFrame with UCI features
@@ -21,53 +21,84 @@ def map_uci_to_phishhook_features(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with F1-F8 features
     """
-    # Create new DataFrame for Phish-Hook features
-    phishhook_df = pd.DataFrame()
+    # Create helper patterns for better feature combinations
+    suspicious_pattern = (
+        (df['Abnormal_URL'] == -1) |
+        (df['Prefix_Suffix'] == -1) |
+        (df['Request_URL'] == -1)
+    )
+    
+    subdomain_suspicious = (
+        (df['having_Sub_Domain'] == -1) |
+        ((df['having_Sub_Domain'] == 0) & (df['URL_Length'] == 1))
+    )
     
     # F1: Small Levenshtein Distance (Look-alike domain)
-    # Map from Prefix_Suffix (suspicious prefix/suffix patterns)
-    # -1 or 1 indicates suspicious patterns
-    phishhook_df['F1'] = ((df['Prefix_Suffix'] == -1) | (df['Prefix_Suffix'] == 1)).astype(int)
+    # Look-alike domains have suspicious prefix/suffix and abnormal patterns
+    phishhook_df = pd.DataFrame()
+    phishhook_df['F1'] = (
+        (df['Prefix_Suffix'] == -1) |
+        ((df['Abnormal_URL'] == -1) & (df['Prefix_Suffix'] != 1)) |
+        ((df['having_IP_Address'] == -1) & suspicious_pattern)
+    ).astype(int)
     
     # F2: Deeply Nested Subdomains
-    # Map from having_Sub_Domain
-    # -1 indicates many subdomains (suspicious), 1 indicates few/none (legitimate)
-    phishhook_df['F2'] = (df['having_Sub_Domain'] == -1).astype(int)
+    # Multiple subdomains indicate phishing
+    phishhook_df['F2'] = (
+        (df['having_Sub_Domain'] == -1) |
+        ((df['having_Sub_Domain'] == 0) & (df['URL_Length'] == 1) & (df['double_slash_redirecting'] == 1))
+    ).astype(int)
     
     # F3: Issued from Free CA
-    # Map from SSLfinal_State (SSL certificate state)
-    # -1 indicates suspicious SSL (could be free CA), 1 indicates legitimate
-    phishhook_df['F3'] = (df['SSLfinal_State'] == -1).astype(int)
+    # Free CAs are commonly used by phishers
+    phishhook_df['F3'] = (
+        (df['SSLfinal_State'] == -1) |
+        ((df['age_of_domain'] == -1) & (df['SSLfinal_State'] != 1)) |
+        ((df['Domain_registeration_length'] == -1) & (df['SSLfinal_State'] != 1))
+    ).astype(int)
     
     # F4: Suspicious TLD
-    # Map from Domain_registeration_length (short registration = suspicious TLD)
-    # -1 indicates short registration (often suspicious TLDs)
-    phishhook_df['F4'] = (df['Domain_registeration_length'] == -1).astype(int)
+    # Short registration and new domains often use suspicious TLDs
+    phishhook_df['F4'] = (
+        (df['Domain_registeration_length'] == -1) |
+        ((df['age_of_domain'] == -1) & (df['Domain_registeration_length'] != 1)) |
+        ((df['DNSRecord'] == -1) & (df['Domain_registeration_length'] == -1))
+    ).astype(int)
     
     # F5: Inner TLD in Subdomain
-    # Map from having_Sub_Domain combined with Prefix_Suffix
-    # Suspicious patterns often have inner TLDs
-    phishhook_df['F5'] = ((df['having_Sub_Domain'] == -1) & 
-                          ((df['Prefix_Suffix'] == -1) | (df['Prefix_Suffix'] == 1))).astype(int)
+    # Fake TLDs in subdomain require subdomains + suspicious patterns
+    phishhook_df['F5'] = (
+        (subdomain_suspicious & (df['Prefix_Suffix'] == -1)) |
+        ((df['having_Sub_Domain'] == -1) & (df['Abnormal_URL'] == -1)) |
+        ((df['having_Sub_Domain'] == 0) & suspicious_pattern & (df['URL_Length'] == 1))
+    ).astype(int)
     
     # F6: Suspicious Keywords
-    # Map from Request_URL, URL_of_Anchor, Links_in_tags
-    # These features indicate suspicious content/keywords
-    phishhook_df['F6'] = ((df['Request_URL'] == -1) | 
-                          (df['URL_of_Anchor'] == -1) | 
-                          (df['Links_in_tags'] == -1)).astype(int)
+    # Keywords in URLs, anchors, and links
+    phishhook_df['F6'] = (
+        (df['Request_URL'] == -1) |
+        (df['URL_of_Anchor'] == -1) |
+        (df['Links_in_tags'] == -1) |
+        ((df['Submitting_to_email'] == 1) & (df['Request_URL'] != 1)) |
+        ((df['SFH'] == -1) & (df['Request_URL'] != 1))
+    ).astype(int)
     
     # F7: High Shannon Entropy
-    # Map from URL_Length (long URLs often have high entropy)
-    # Also consider Abnormal_URL
-    phishhook_df['F7'] = ((df['URL_Length'] == 1) & 
-                          (df['Abnormal_URL'] == -1)).astype(int)
+    # Random domains have long URLs with abnormal patterns
+    phishhook_df['F7'] = (
+        ((df['URL_Length'] == 1) & (df['Abnormal_URL'] == -1)) |
+        ((df['URL_Length'] == 1) & (df['having_IP_Address'] == -1) & suspicious_pattern) |
+        ((df['Shortining_Service'] == 1) & (df['URL_Length'] == 1))
+    ).astype(int)
     
     # F8: Hyphens in Subdomain
-    # Map from having_Sub_Domain and Prefix_Suffix
-    # Hyphens often appear in suspicious subdomains
-    phishhook_df['F8'] = ((df['having_Sub_Domain'] == -1) & 
-                          (df['Prefix_Suffix'] == -1)).astype(int)
+    # Phishing domains use hyphens in subdomains
+    phishhook_df['F8'] = (
+        (subdomain_suspicious & (df['Prefix_Suffix'] == -1)) |
+        ((df['having_Sub_Domain'] == -1) & (df['Abnormal_URL'] == -1)) |
+        ((df['having_Sub_Domain'] == -1) & (df['Request_URL'] == -1)) |
+        ((df['having_Sub_Domain'] == 0) & (df['Prefix_Suffix'] == -1) & (df['URL_Length'] == 1))
+    ).astype(int)
     
     return phishhook_df
 

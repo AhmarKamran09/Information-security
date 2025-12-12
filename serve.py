@@ -42,8 +42,17 @@ class PhishHookDetector:
         """
         print(f"Loading model from {model_path}...")
         with open(model_path, 'rb') as f:
-            self.model = pickle.load(f)
-        print("Model loaded successfully!")
+            model_data = pickle.load(f)
+        
+        # Handle both formats: dict (advanced) or direct model (standard)
+        if isinstance(model_data, dict) and 'model' in model_data:
+            self.model = model_data['model']
+            self.scaler = model_data.get('scaler', None)
+            print(f"Model loaded successfully! (Type: {model_data.get('model_name', 'Unknown')})")
+        else:
+            self.model = model_data
+            self.scaler = None
+            print("Model loaded successfully!")
         
         self.stats = {
             'total_domains': 0,
@@ -67,6 +76,10 @@ class PhishHookDetector:
         
         # Reshape for prediction
         X = np.array(features).reshape(1, -1)
+        
+        # Apply scaler if available (from advanced training)
+        if self.scaler is not None:
+            X = self.scaler.transform(X)
         
         # Get prediction and probability
         prediction = self.model.predict(X)[0]
@@ -92,18 +105,19 @@ class PhishHookDetector:
             'features': features
         }
     
-    def classify_domain(self, domain: str, issuer: str = "") -> Dict:
+    def classify_domain(self, domain: str, issuer: str = "", use_enhanced_f1: bool = True) -> Dict:
         """
         Classify a single domain.
         
         Args:
             domain: Domain string
             issuer: Certificate issuer
+            use_enhanced_f1: Whether to use enhanced brand similarity (embedding-based)
             
         Returns:
             Classification results
         """
-        features = extract_features(domain, issuer)
+        features = extract_features(domain, issuer, use_enhanced_f1=use_enhanced_f1)
         result = self.predict_risk_level(features)
         result['domain'] = domain
         result['issuer'] = issuer
@@ -226,6 +240,8 @@ def main():
                        help='Output file for detections')
     parser.add_argument('--domain', type=str, default=None,
                        help='Test single domain (for testing)')
+    parser.add_argument('--no-enhanced-f1', action='store_true',
+                       help='Disable enhanced brand similarity (use original Levenshtein)')
     
     args = parser.parse_args()
     
@@ -234,7 +250,10 @@ def main():
     # Test single domain if provided
     if args.domain:
         print(f"\nTesting domain: {args.domain}")
-        result = detector.classify_domain(args.domain)
+        use_enhanced = not args.no_enhanced_f1
+        if use_enhanced:
+            print("Using enhanced F1 (brand similarity embedding)")
+        result = detector.classify_domain(args.domain, use_enhanced_f1=use_enhanced)
         print(f"\nResult:")
         print(f"  Domain: {result['domain']}")
         print(f"  Risk Level: {result['risk_level']} - {result['risk_name']}")

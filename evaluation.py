@@ -19,7 +19,13 @@ from uci_mapper import prepare_training_data
 def load_model(model_path: str):
     """Load trained model from pickle file."""
     with open(model_path, 'rb') as f:
-        return pickle.load(f)
+        model_data = pickle.load(f)
+    
+    # Handle both formats: dict (advanced) or direct model (standard)
+    if isinstance(model_data, dict) and 'model' in model_data:
+        return model_data['model']
+    else:
+        return model_data
 
 
 def evaluate_model(model, X_test, y_test):
@@ -177,7 +183,16 @@ def main():
     
     # Load model
     print(f"Loading model from {args.model}...")
-    model = load_model(args.model)
+    model_data = pickle.load(open(args.model, 'rb'))
+    
+    # Handle both formats: dict (advanced) or direct model (standard)
+    if isinstance(model_data, dict) and 'model' in model_data:
+        model = model_data['model']
+        scaler = model_data.get('scaler', None)
+        print(f"Model type: {model_data.get('model_name', 'Unknown')}")
+    else:
+        model = model_data
+        scaler = None
     
     # Load data
     print(f"Loading dataset from {args.dataset}...")
@@ -190,6 +205,11 @@ def main():
     )
     
     print(f"\nTest set size: {len(X_test)} samples")
+    
+    # Apply scaler if available
+    if scaler is not None:
+        print("Applying scaler to test data...")
+        X_test = scaler.transform(X_test)
     
     # Evaluate model
     results = evaluate_model(model, X_test, y_test)

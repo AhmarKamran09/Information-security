@@ -8,7 +8,7 @@ import json
 import time
 from datetime import datetime
 from typing import Callable, Optional
-from features import extract_features_from_ct_entry
+from features import extract_features_from_ct_entry, extract_features
 
 
 class CTLogCollector:
