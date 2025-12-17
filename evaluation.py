@@ -14,6 +14,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 import matplotlib.pyplot as plt
 from uci_mapper import prepare_training_data
+from campaign import CampaignDetector
 
 
 def load_model(model_path: str):
@@ -93,22 +94,6 @@ def print_evaluation_report(results: dict, model_name: str = "Model"):
     print(f"Actual Legit    {cm[0][0]:4d}    {cm[0][1]:4d}")
     print(f"      Phishing {cm[1][0]:4d}    {cm[1][1]:4d}")
     
-    print("\nPaper Target Performance:")
-    print("  Accuracy:  ~95%")
-    print("  Precision: ~93-96%")
-    print("  Recall:    ~93-95%")
-    print("  F1 Score:  ~94-95%")
-    
-    print("\nComparison:")
-    accuracy_match = "✅" if results['accuracy'] >= 0.93 else "❌"
-    precision_match = "✅" if 0.93 <= results['precision'] <= 0.97 else "❌"
-    recall_match = "✅" if 0.93 <= results['recall'] <= 0.96 else "❌"
-    f1_match = "✅" if 0.94 <= results['f1'] <= 0.96 else "❌"
-    
-    print(f"  Accuracy:  {accuracy_match} {'Match' if results['accuracy'] >= 0.93 else 'Below target'}")
-    print(f"  Precision: {precision_match} {'Match' if 0.93 <= results['precision'] <= 0.97 else 'Outside range'}")
-    print(f"  Recall:    {recall_match} {'Match' if 0.93 <= results['recall'] <= 0.96 else 'Outside range'}")
-    print(f"  F1 Score:  {f1_match} {'Match' if 0.94 <= results['f1'] <= 0.96 else 'Outside range'}")
 
 
 def plot_roc_curve(y_test, y_pred_proba, output_file: str = None):
@@ -136,6 +121,56 @@ def plot_roc_curve(y_test, y_pred_proba, output_file: str = None):
         print(f"\nROC curve saved to {output_file}")
     else:
         plt.show()
+
+
+def analyze_campaigns_from_stream(cert_stream_file: str, size_threshold: int = 3, time_window_seconds: int = 86400):
+    """Analyze a JSON-lines file of certificate events and report campaigns.
+
+    The file should contain one JSON object per line with at least keys:
+    - timestamp, domains, issuer, classification (mapping domain->result)
+    """
+    import json
+    detector = CampaignDetector(size_threshold=size_threshold, time_window_seconds=time_window_seconds)
+    alerts = []
+    with open(cert_stream_file, 'r') as f:
+        for line in f:
+            try:
+                cert = json.loads(line)
+            except Exception:
+                continue
+            classification = cert.get('classification', {})
+            new_alerts = detector.add(cert, classification)
+            if new_alerts:
+                alerts.extend(new_alerts)
+
+    return alerts
+
+
+def print_campaign_report(alerts: list):
+    """Print a human-friendly report of discovered campaigns."""
+    if not alerts:
+        print("No campaigns discovered.")
+        return
+
+    print("\n" + "="*60)
+    print("Campaign Discovery Report")
+    print("="*60)
+
+    # Group by campaign key and summarize
+    by_key = {}
+    for a in alerts:
+        k = a.get('campaign_key')
+        by_key.setdefault(k, []).append(a)
+
+    for k, items in by_key.items():
+        # pick latest summary
+        latest = items[-1]
+        print(f"Campaign: {k}")
+        print(f"  Size: {latest['size']}")
+        print(f"  Unique domains: {', '.join(latest['unique_domains'][:10])}")
+        print(f"  Phishing count: {latest['phishing_count']}")
+        print(f"  Avg phishing probability: {latest['average_phishing_probability']}")
+        print(f"  Last seen: {latest['last_seen']}\n")
 
 
 def cross_validate(model, X, y, cv=10):
@@ -176,7 +211,7 @@ def main():
                        help='Number of cross-validation folds')
     parser.add_argument('--plot-roc', action='store_true',
                        help='Plot ROC curve')
-    parser.add_argument('--roc-output', type=str, default='roc_curve.png',
+    parser.add_argument('--roc-output', type=str, default='roc_curve_simple.png',
                        help='Output file for ROC curve')
     
     args = parser.parse_args()

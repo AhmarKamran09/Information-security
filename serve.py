@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 import numpy as np
 from collector import CTLogCollector
 from features import extract_features_from_ct_entry, extract_features
+from campaign import CampaignDetector
 
 
 class PhishHookDetector:
@@ -131,28 +132,33 @@ class PhishHookDetector:
         features_list = cert_data.get('features', [])
         
         if not domains:
-            return
+            return {}
         
         self.stats['total_domains'] += len(domains)
         
-        # Classify each domain
+        # Classify each domain and collect classification mapping
+        classification: Dict[str, Dict] = {}
         for i, domain in enumerate(domains):
             if i < len(features_list):
                 features = features_list[i]
             else:
                 # Fallback: extract features if not provided
                 features = extract_features(domain, issuer)
-            
+
             result = self.predict_risk_level(features)
-            
+            result['domain'] = domain
+            result['issuer'] = issuer
+
+            classification[domain] = result
+
             # Update statistics
             self.stats['risk_levels'][result['risk_level']] += 1
-            if result['prediction'] == 1:
+            if result['prediction'] == 1 or result['phishing_probability'] >= 0.5:
                 self.stats['phishing_detected'] += 1
             else:
                 self.stats['legitimate'] += 1
-            
-            # Print high-risk domains
+
+            # Print high-risk domains (for operator situational awareness)
             if result['risk_level'] >= 2:  # Likely, Suspicious, or Highly Suspicious
                 print(f"\n{'='*60}")
                 print(f"⚠️  SUSPICIOUS DOMAIN DETECTED")
@@ -165,6 +171,10 @@ class PhishHookDetector:
                       f"F4={features[3]} F5={features[4]} F6={features[5]} "
                       f"F7={features[6]} F8={features[7]}")
                 print(f"{'='*60}\n")
+
+        # Attach classification mapping for downstream consumers
+        cert_data['classification'] = classification
+        return classification
     
     def print_stats(self):
         """Print detection statistics."""
@@ -195,18 +205,35 @@ class RealTimeDetector:
         self.detector = PhishHookDetector(model_path)
         self.output_file = output_file
         self.start_time = time.time()
+        # Campaign detector is disabled by default; can be enabled by caller
+        self.campaign_detector: Optional[CampaignDetector] = None
     
     def callback(self, cert_data: Dict):
         """Callback for certificate processing."""
-        self.detector.process_certificate(cert_data)
-        
-        # Save to file if specified
+        classification = self.detector.process_certificate(cert_data)
+
+        # Save to file if specified (include classification)
         if self.output_file:
             with open(self.output_file, 'a') as f:
-                f.write(json.dumps(cert_data) + '\n')
-        
-        # Print stats every 1000 domains
-        if self.detector.stats['total_domains'] % 1000 == 0:
+                f.write(json.dumps({
+                    'timestamp': cert_data.get('timestamp'),
+                    'domains': cert_data.get('domains'),
+                    'issuer': cert_data.get('issuer'),
+                    'classification': classification
+                }) + '\n')
+
+        # Campaign detection (if configured)
+        if self.campaign_detector is not None:
+            alerts = self.campaign_detector.add(cert_data, classification)
+            for alert in alerts:
+                print('\n' + '!'*10 + ' CAMPAIGN ALERT ' + '!'*10)
+                print(f"Campaign key: {alert.get('campaign_key')}")
+                print(f"Size: {alert.get('size')}  Unique domains: {alert.get('unique_domains')}")
+                print(f"Phishing count: {alert.get('phishing_count')}, Avg prob: {alert.get('average_phishing_probability')}")
+                print('!'*36 + '\n')
+
+        # Print stats periodically
+        if self.detector.stats['total_domains'] % 10 == 0:
             elapsed = time.time() - self.start_time
             rate = self.detector.stats['total_domains'] / elapsed if elapsed > 0 else 0
             print(f"\n[{datetime.now()}] Processed {self.detector.stats['total_domains']} domains "
@@ -242,6 +269,12 @@ def main():
                        help='Test single domain (for testing)')
     parser.add_argument('--no-enhanced-f1', action='store_true',
                        help='Disable enhanced brand similarity (use original Levenshtein)')
+    parser.add_argument('--enable-campaign', action='store_true',
+                       help='Enable campaign-level detection (grouping heuristics)')
+    parser.add_argument('--campaign-threshold', type=int, default=3,
+                       help='Minimum campaign size to trigger alert')
+    parser.add_argument('--campaign-window', type=int, default=86400,
+                       help='Time window for campaign clustering (seconds)')
     
     args = parser.parse_args()
     
@@ -263,6 +296,10 @@ def main():
     
     # Start real-time detection
     rt_detector = RealTimeDetector(args.model, args.output)
+    if args.enable_campaign:
+        print(f"Enabling campaign detection: threshold={args.campaign_threshold}, window={args.campaign_window}s")
+        rt_detector.campaign_detector = CampaignDetector(size_threshold=args.campaign_threshold,
+                                                         time_window_seconds=args.campaign_window)
     rt_detector.start()
 
 

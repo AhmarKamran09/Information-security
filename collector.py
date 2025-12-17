@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 from typing import Callable, Optional
 from features import extract_features_from_ct_entry, extract_features
+from campaign import resolve_ips, domain_age_days
 
 
 class CTLogCollector:
@@ -48,12 +49,31 @@ class CTLogCollector:
             
             # Extract features
             features_list, domains_list = extract_features_from_ct_entry(message)
-            
+
+            # Resolve IPs and optionally domain ages (best-effort)
+            ips_map = {}
+            ages_map = {}
+            for d in domains_list:
+                try:
+                    d_clean = d.split('/')[0].lower()
+                    ips_map[d] = resolve_ips(d_clean)
+                except Exception:
+                    ips_map[d] = []
+                try:
+                    age = domain_age_days(d)
+                    if age is not None:
+                        ages_map[d] = age
+                except Exception:
+                    # be resilient to whois/network failures
+                    pass
+
             cert_data = {
                 'timestamp': datetime.now().isoformat(),
                 'domains': domains_list,
                 'issuer': issuer,
                 'features': features_list,
+                'ips': ips_map,
+                'domain_ages': ages_map,
                 'cert_index': data.get('cert_index', None)
             }
             

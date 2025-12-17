@@ -18,6 +18,9 @@ matplotlib>=3.4.0
 
 # Utilities
 python-dateutil>=2.8.0
+# Optional: whois lookup to include domain age in campaign heuristics (best-effort)
+# Install only if you want domain-age enrichment: python-whois
+# python-whois>=0.7
 
 # Brand Similarity (Improved F1)
 scikit-learn>=1.0.0  # For TfidfVectorizer and cosine similarity
