@@ -1,6 +1,7 @@
 """
 Improved Phish-Hook Model Training
 Adds brand similarity embedding (enhanced F1) for better typosquatting detection.
+Supports 12 features (F1-F12) with F9-F12 padded as zeros for UCI data.
 """
 
 import os
@@ -166,11 +167,17 @@ def main():
     
     print(f"\nDataset loaded:")
     print(f"  Samples: {len(X)}")
-    print(f"  Features: {X.shape[1]} (F1-F8)")
+    print(f"  Features: {X.shape[1]} (F1-F8 from UCI dataset)")
     
-    # Split into train/test
+    # Pad with zeros for F9-F12 (certificate security features)
+    print(f"\nPadding with F9-F12 certificate security features (zeros for UCI data)...")
+    X_padded = np.hstack([X, np.zeros((X.shape[0], 4))])
+    print(f"  Extended features: {X_padded.shape[1]} (F1-F12)")
+    print(f"  Note: F9-F12 are zero-padded as UCI dataset lacks certificate metadata")
+    
+    # Split into train/test (use padded data)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=args.test_size, random_state=42, stratify=y
+        X_padded, y, test_size=args.test_size, random_state=42, stratify=y
     )
     
     print(f"\nTrain/Test split:")

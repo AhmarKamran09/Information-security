@@ -1,11 +1,12 @@
 """
 Phish-Hook Feature Extraction Module
 Extracts F1-F8 features from domains as specified in the paper.
+Optionally extracts F9-F11 certificate security features.
 """
 
 import re
 import math
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Dict
 from Levenshtein import distance as levenshtein_distance
 
 
@@ -245,17 +246,21 @@ def f8_hyphens_in_subdomain(domain: str, threshold: int = 2) -> int:
     return 1 if total_hyphens >= threshold else 0
 
 
-def extract_features(domain: str, issuer: str = "", use_enhanced_f1: bool = True) -> List[int]:
+def extract_features(domain: str, issuer: str = "", use_enhanced_f1: bool = True, 
+                    cert_data: Optional[Dict] = None, include_cert_features: bool = True) -> List[int]:
     """
-    Extract all F1-F8 features from a domain.
+    Extract all F1-F8 (or F1-F11) features from a domain.
     
     Args:
         domain: Domain string to analyze
         issuer: Certificate issuer (for F3)
         use_enhanced_f1: Whether to use enhanced brand similarity (embedding-based)
+        cert_data: Certificate data dictionary (for F9-F11)
+        include_cert_features: Whether to include F9-F11 certificate security features
         
     Returns:
         List of 8 binary features [F1, F2, F3, F4, F5, F6, F7, F8]
+        or 11 binary features [F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11]
     """
     # Use enhanced F1 if requested, otherwise use original Levenshtein
     f1_value = f1_enhanced_brand_similarity(domain, use_embedding=use_enhanced_f1) if use_enhanced_f1 else f1_levenshtein_lookalike(domain)
@@ -271,16 +276,34 @@ def extract_features(domain: str, issuer: str = "", use_enhanced_f1: bool = True
         f8_hyphens_in_subdomain(domain)
     ]
     
+    # Add certificate security features if requested
+    if include_cert_features and cert_data:
+        try:
+            from cert_security import extract_cert_security_features
+            cert_features = extract_cert_security_features(cert_data)
+            features.extend(cert_features)
+        except ImportError:
+            # If cert_security module not available, pad with zeros
+            features.extend([0, 0, 0, 0])
+        except Exception:
+            # On any error, pad with zeros
+            features.extend([0, 0, 0, 0])
+    elif include_cert_features:
+        # No cert_data provided, pad with zeros
+        features.extend([0, 0, 0, 0])
+    
     return features
 
 
-def extract_features_from_ct_entry(ct_entry: dict, use_enhanced_f1: bool = True) -> Tuple[List[int], List[str]]:
+def extract_features_from_ct_entry(ct_entry: dict, use_enhanced_f1: bool = True, 
+                                  include_cert_features: bool = True) -> Tuple[List[int], List[str]]:
     """
     Extract features from a Certificate Transparency log entry.
     
     Args:
         ct_entry: CT log entry dictionary
         use_enhanced_f1: Whether to use enhanced brand similarity (embedding-based)
+        include_cert_features: Whether to include F9-F11 certificate security features
         
     Returns:
         Tuple of (features_list, domains_list)
@@ -295,11 +318,24 @@ def extract_features_from_ct_entry(ct_entry: dict, use_enhanced_f1: bool = True)
         if chain and len(chain) > 0:
             issuer = chain[0].get('subject', {}).get('aggregated', '')
         
+        # Prepare certificate data for F9-F11
+        cert_data = {
+            'leaf_cert': leaf_cert,
+            'all_domains': domains,
+            'data': data
+        } if include_cert_features else None
+        
         # Extract features for each domain
         all_features = []
         for domain in domains:
             if domain:
-                features = extract_features(domain, issuer, use_enhanced_f1=use_enhanced_f1)
+                features = extract_features(
+                    domain, 
+                    issuer, 
+                    use_enhanced_f1=use_enhanced_f1,
+                    cert_data=cert_data,
+                    include_cert_features=include_cert_features
+                )
                 all_features.append(features)
         
         return all_features, domains
