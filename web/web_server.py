@@ -7,15 +7,21 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import pickle
 import numpy as np
-from features import extract_features
-from generate_features import generate_enhanced_features
+import sys
+import os
 
-app = Flask(__name__, static_folder='web')
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from features import extract_features
+
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
 # Load model
 print("Loading model...")
-with open('phishhook_model_final.pkl', 'rb') as f:
+model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models', 'phishhook_model.pkl')
+with open(model_path, 'rb') as f:
     model = pickle.load(f)
 print(f"Model loaded! Features: {model.n_features_in_}")
 
@@ -31,7 +37,7 @@ def extract_domain(url):
 @app.route('/')
 def index():
     """Serve main page."""
-    return send_from_directory('web', 'index.html')
+    return send_from_directory('.', 'index.html')
 
 
 @app.route('/api/analyze', methods=['POST'])
@@ -47,27 +53,15 @@ def analyze():
         # Extract domain
         domain = extract_domain(url)
         
-        # Extract F1-F8 features
-        features_f1_f8 = extract_features(
+        # Extract all 12 features (F1-F12)
+        # extract_features with include_cert_features=True returns all 12 features
+        features = extract_features(
             domain=domain,
             issuer="",
-            use_enhanced_f1=True
+            cert_data=None,
+            use_enhanced_f1=True,
+            include_cert_features=True
         )
-        
-        # Generate F9-F12 based on domain and F1-F8
-        suspicious_count_f1_f8 = sum(features_f1_f8)
-        is_likely_phishing = 1 if suspicious_count_f1_f8 >= 3 else 0
-        
-        features_f9_f12 = generate_enhanced_features(domain, is_likely_phishing)
-        
-        # Combine all features
-        features = features_f1_f8 + features_f9_f12
-        
-        # Ensure exactly 12 features
-        if len(features) < 12:
-            features.extend([0] * (12 - len(features)))
-        elif len(features) > 12:
-            features = features[:12]
         
         # Predict
         features_array = np.array([features])

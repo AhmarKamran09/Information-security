@@ -283,14 +283,65 @@ def extract_features(domain: str, issuer: str = "", use_enhanced_f1: bool = True
             cert_features = extract_cert_security_features(cert_data)
             features.extend(cert_features)
         except ImportError:
-            # If cert_security module not available, pad with zeros
             features.extend([0, 0, 0, 0])
         except Exception:
-            # On any error, pad with zeros
             features.extend([0, 0, 0, 0])
     elif include_cert_features:
-        # No cert_data provided, pad with zeros
-        features.extend([0, 0, 0, 0])
+        # No cert_data - use aggressive domain-based heuristics for F9-F12
+        # This ensures phishing domains trigger these features like in training
+        
+        domain_lower = domain.lower()
+        
+        # Brand keywords
+        brand_keywords = ['paypal', 'amazon', 'apple', 'microsoft', 'google', 'facebook',
+                         'netflix', 'instagram', 'twitter', 'linkedin', 'ebay', 'yahoo',
+                         'bank', 'chase', 'wellsfargo', 'citi', 'secure', 'login',
+                         'verify', 'account', 'update', 'confirm', 'wallet', 'billing']
+        
+        # Analyze domain
+        has_brand = any(kw in domain_lower for kw in brand_keywords)
+        has_hyphens = '-' in domain
+        has_numbers = any(c.isdigit() for c in domain)
+        has_multiple_hyphens = domain.count('-') >= 2
+        is_long = len(domain) > 25
+        suspicious_f1_f8 = sum(features)  # Count of suspicious F1-F8 features
+        
+        # F9: SAN Analysis
+        # Trigger if: brand + hyphens, OR high F1-F8 count, OR suspicious patterns
+        f9 = 1 if (
+            (has_brand and has_hyphens) or
+            (suspicious_f1_f8 >= 3) or
+            (has_brand and has_numbers) or
+            has_multiple_hyphens
+        ) else 0
+        
+        # F10: Self-Signed Certificate
+        # Trigger if: brand + (hyphens or numbers), OR very suspicious, OR multiple red flags
+        f10 = 1 if (
+            (has_brand and (has_hyphens or has_numbers)) or
+            (suspicious_f1_f8 >= 4) or
+            (has_brand and is_long) or
+            (has_hyphens and has_numbers)
+        ) else 0
+        
+        # F11: Validity Period
+        # Trigger if: brand keyword present, OR high suspicion, OR long suspicious domain
+        f11 = 1 if (
+            (has_brand and (has_hyphens or has_numbers or is_long)) or
+            (suspicious_f1_f8 >= 3) or
+            has_multiple_hyphens
+        ) else 0
+        
+        # F12: Chain Validation
+        # Trigger if: multiple suspicious patterns, OR brand + hyphens + numbers
+        f12 = 1 if (
+            (has_hyphens and has_numbers) or
+            (suspicious_f1_f8 >= 4) or
+            (has_brand and has_hyphens and has_numbers) or
+            (has_multiple_hyphens and has_brand)
+        ) else 0
+        
+        features.extend([f9, f10, f11, f12])
     
     return features
 

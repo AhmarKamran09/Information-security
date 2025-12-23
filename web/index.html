@@ -16,11 +16,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
@@ -31,54 +31,29 @@
         }
 
         .header h1 {
-            font-size: 2.5em;
+            font-size: 2.8em;
             margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .header p {
             font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-label {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
+            opacity: 0.95;
         }
 
         .main-card {
             background: white;
             border-radius: 15px;
-            padding: 30px;
+            padding: 35px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             margin-bottom: 25px;
         }
 
         .card-title {
-            font-size: 1.4em;
-            margin-bottom: 20px;
+            font-size: 1.5em;
+            margin-bottom: 25px;
             color: #333;
+            font-weight: 600;
         }
 
         .input-group {
@@ -87,17 +62,19 @@
 
         .input-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             color: #555;
             font-weight: 500;
+            font-size: 1.05em;
         }
 
         .input-group input {
             width: 100%;
-            padding: 14px;
+            padding: 15px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 1em;
+            font-size: 1.05em;
+            transition: border-color 0.3s ease;
         }
 
         .input-group input:focus {
@@ -108,12 +85,14 @@
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 14px 35px;
+            padding: 15px 40px;
             border: none;
             border-radius: 8px;
-            font-size: 1.05em;
+            font-size: 1.1em;
             cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            font-weight: 600;
         }
 
         .btn:hover {
@@ -121,10 +100,14 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
+        .btn:active {
+            transform: translateY(0);
+        }
+
         .result {
-            margin-top: 25px;
-            padding: 25px;
-            border-radius: 10px;
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 12px;
             display: none;
         }
 
@@ -139,114 +122,125 @@
         }
 
         .result-title {
-            font-size: 1.6em;
-            margin-bottom: 12px;
+            font-size: 2em;
+            margin-bottom: 15px;
             font-weight: bold;
         }
 
-        .result-details {
-            font-size: 1.05em;
-            line-height: 1.8;
+        .result-subtitle {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            opacity: 0.95;
+        }
+
+        .features-section {
+            margin-top: 25px;
+        }
+
+        .features-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
 
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .feature-item {
-            background: rgba(255, 255, 255, 0.25);
-            padding: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
             border-radius: 8px;
             text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .feature-item.active {
+            background: rgba(255, 255, 255, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.5);
         }
 
         .feature-name {
-            font-size: 0.85em;
-            margin-bottom: 5px;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            font-weight: 500;
         }
 
         .feature-value {
-            font-size: 1.3em;
+            font-size: 1.8em;
             font-weight: bold;
         }
 
-        .chart-container {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
+        .feature-desc {
+            font-size: 0.75em;
+            margin-top: 5px;
+            opacity: 0.85;
         }
 
-        .bar {
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            height: 28px;
-            border-radius: 5px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            padding-left: 10px;
-            color: white;
-            font-weight: 600;
-            font-size: 0.9em;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="header">
+        <div class="header fade-in">
             <h1>🛡️ Phish-Hook</h1>
             <p>Advanced Phishing Detection System</p>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Accuracy</div>
-                <div class="stat-value">92.40%</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Precision</div>
-                <div class="stat-value">91.43%</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Recall</div>
-                <div class="stat-value">91.43%</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Features</div>
-                <div class="stat-value">12</div>
-            </div>
-        </div>
-
-        <div class="main-card">
+        <div class="main-card fade-in">
             <h2 class="card-title">🔍 Analyze URL</h2>
             <form id="analyzeForm">
                 <div class="input-group">
                     <label for="url">Enter URL or Domain:</label>
-                    <input type="text" id="url" placeholder="e.g., paypal-secure-login.com or https://example.com"
-                        required>
+                    <input type="text" id="url" placeholder="e.g., paypal-secure-login.com" required>
                 </div>
                 <button type="submit" class="btn">Analyze URL</button>
             </form>
 
             <div id="result" class="result"></div>
         </div>
-
-        <div class="main-card">
-            <h2 class="card-title">📊 Feature Importance</h2>
-            <div class="chart-container">
-                <div class="bar" style="width: 44.8%;">F3: Free CA (44.8%)</div>
-                <div class="bar" style="width: 19.7%;">F10: Self-Signed (19.7%)</div>
-                <div class="bar" style="width: 15.0%;">F6: Keywords (15.0%)</div>
-                <div class="bar" style="width: 6.5%;">F12: Chain (6.5%)</div>
-                <div class="bar" style="width: 4.5%;">F1: Brand (4.5%)</div>
-            </div>
-        </div>
     </div>
 
     <script>
+        const featureDescriptions = {
+            'F1': 'Brand Similarity',
+            'F2': 'Subdomain Depth',
+            'F3': 'Free CA',
+            'F4': 'Suspicious TLD',
+            'F5': 'Inner TLD',
+            'F6': 'Keywords',
+            'F7': 'High Entropy',
+            'F8': 'Hyphens',
+            'F9': 'SAN Analysis',
+            'F10': 'Self-Signed',
+            'F11': 'Validity Period',
+            'F12': 'Chain Validation'
+        };
+
         document.getElementById('analyzeForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
@@ -266,35 +260,38 @@
 
                 const data = await response.json();
 
-                resultDiv.className = `result ${data.prediction === 1 ? 'phishing' : 'legitimate'}`;
+                resultDiv.className = `result ${data.prediction === 1 ? 'phishing' : 'legitimate'} fade-in`;
 
                 const resultHTML = `
                     <div class="result-title">
                         ${data.prediction === 1 ? '⚠️ PHISHING DETECTED' : '✅ LEGITIMATE SITE'}
                     </div>
-                    <div class="result-details">
-                        <p><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</p>
-                        <p><strong>Risk Level:</strong> ${data.risk_level}</p>
-                        <p><strong>Suspicious Features:</strong> ${data.suspicious_count}/12</p>
+                    <div class="result-subtitle">
+                        Confidence: ${(data.confidence * 100).toFixed(1)}% | Risk: ${data.risk_level}
                     </div>
-                    <div class="feature-grid">
-                        ${data.features.map((val, idx) => `
-                            <div class="feature-item">
-                                <div class="feature-name">F${idx + 1}</div>
-                                <div class="feature-value">${val === 1 ? '⚠️' : '✓'}</div>
-                            </div>
-                        `).join('')}
+                    
+                    <div class="features-section">
+                        <div class="features-title">Feature Analysis (${data.suspicious_count}/12 suspicious)</div>
+                        <div class="feature-grid">
+                            ${data.features.map((val, idx) => `
+                                <div class="feature-item ${val === 1 ? 'active' : ''}">
+                                    <div class="feature-name">F${idx + 1}</div>
+                                    <div class="feature-value">${val === 1 ? '⚠️' : '✓'}</div>
+                                    <div class="feature-desc">${featureDescriptions['F' + (idx + 1)]}</div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 `;
 
                 resultDiv.innerHTML = resultHTML;
 
             } catch (error) {
-                resultDiv.className = 'result phishing';
+                resultDiv.className = 'result phishing fade-in';
                 resultDiv.innerHTML = `
                     <div class="result-title">❌ Error</div>
-                    <div class="result-details">
-                        <p>Server error. Make sure the server is running.</p>
+                    <div class="result-subtitle">
+                        Could not analyze URL. Please make sure the server is running.
                     </div>
                 `;
             }
