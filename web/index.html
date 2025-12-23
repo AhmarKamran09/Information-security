@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phish-Hook - Phishing Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 35px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 25px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.phishing {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .result.legitimate {
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            color: white;
+        }
+
+        .result-title {
+            font-size: 1.6em;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .result-details {
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .feature-name {
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .feature-value {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 28px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Phish-Hook</h1>
+            <p>Advanced Phishing Detection System</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Accuracy</div>
+                <div class="stat-value">92.40%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Precision</div>
+                <div class="stat-value">91.43%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Recall</div>
+                <div class="stat-value">91.43%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Features</div>
+                <div class="stat-value">12</div>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <h2 class="card-title">🔍 Analyze URL</h2>
+            <form id="analyzeForm">
+                <div class="input-group">
+                    <label for="url">Enter URL or Domain:</label>
+                    <input type="text" id="url" placeholder="e.g., paypal-secure-login.com or https://example.com"
+                        required>
+                </div>
+                <button type="submit" class="btn">Analyze URL</button>
+            </form>
+
+            <div id="result" class="result"></div>
+        </div>
+
+        <div class="main-card">
+            <h2 class="card-title">📊 Feature Importance</h2>
+            <div class="chart-container">
+                <div class="bar" style="width: 44.8%;">F3: Free CA (44.8%)</div>
+                <div class="bar" style="width: 19.7%;">F10: Self-Signed (19.7%)</div>
+                <div class="bar" style="width: 15.0%;">F6: Keywords (15.0%)</div>
+                <div class="bar" style="width: 6.5%;">F12: Chain (6.5%)</div>
+                <div class="bar" style="width: 4.5%;">F1: Brand (4.5%)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('analyzeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const url = document.getElementById('url').value;
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<div class="result-title">🔄 Analyzing...</div>';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                resultDiv.className = `result ${data.prediction === 1 ? 'phishing' : 'legitimate'}`;
+
+                const resultHTML = `
+                    <div class="result-title">
+                        ${data.prediction === 1 ? '⚠️ PHISHING DETECTED' : '✅ LEGITIMATE SITE'}
+                    </div>
+                    <div class="result-details">
+                        <p><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</p>
+                        <p><strong>Risk Level:</strong> ${data.risk_level}</p>
+                        <p><strong>Suspicious Features:</strong> ${data.suspicious_count}/12</p>
+                    </div>
+                    <div class="feature-grid">
+                        ${data.features.map((val, idx) => `
+                            <div class="feature-item">
+                                <div class="feature-name">F${idx + 1}</div>
+                                <div class="feature-value">${val === 1 ? '⚠️' : '✓'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                resultDiv.innerHTML = resultHTML;
+
+            } catch (error) {
+                resultDiv.className = 'result phishing';
+                resultDiv.innerHTML = `
+                    <div class="result-title">❌ Error</div>
+                    <div class="result-details">
+                        <p>Server error. Make sure the server is running.</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+
+</html>

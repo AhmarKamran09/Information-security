@@ -1,2 +1,3 @@
 explanations/
 __pycache__/
+*.log
