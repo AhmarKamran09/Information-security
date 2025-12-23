@@ -1,27 +1,28 @@
 # Phish-Hook Requirements
-# Machine Learning
-scikit-learn>=1.0.0
-numpy>=1.21.0
-pandas>=1.3.0
 
-# Imbalanced Learning
-imbalanced-learn>=0.8.0
+# Core ML Libraries
+scikit-learn>=1.3.0
+numpy>=1.24.0
+pandas>=2.0.0
+imbalanced-learn>=0.11.0
 
-# String Distance
-python-Levenshtein>=0.12.0
-
-# Certificate Transparency
-certstream>=1.11
-
-# Visualization (optional)
-matplotlib>=3.4.0
-
-# Utilities
+# Feature Extraction
+python-Levenshtein>=0.21.0
 python-dateutil>=2.8.0
-# Optional: whois lookup to include domain age in campaign heuristics (best-effort)
-# Install only if you want domain-age enrichment: python-whois
-# python-whois>=0.7
 
-# Brand Similarity (Improved F1)
-scikit-learn>=1.0.0  # For TfidfVectorizer and cosine similarity
+# Web Interface
+flask>=3.0.0
+flask-cors>=4.0.0
 
+# Certificate Analysis
+certstream>=1.11
+cryptography>=41.0.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Data Processing
+scipy>=1.11.0
+
+# Optional: Domain Analysis
+python-whois>=0.8.0

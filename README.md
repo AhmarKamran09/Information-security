@@ -1,71 +1,129 @@
+# Phish-Hook - Advanced Phishing Detection System
 
-# Phish-Hook: Real-Time Phishing Detection System
+[![Accuracy](https://img.shields.io/badge/Accuracy-92.18%25-brightgreen)](models/)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-Phish-Hook is an advanced, real-time phishing detection system that monitors Certificate Transparency (CT) logs to identify potential phishing domains as they are issued. Leveraging machine learning and branding similarity analysis, it classifies domains into risk levels to protect users from emerging threats.
+Advanced machine learning-based phishing detection system with 92.18% accuracy using domain analysis and certificate security features.
 
-## 🚀 Features
+## 📊 Performance
 
--   **Real-Time Monitoring**: Listens to CertStream for live SSL/TLS certificate issuance events.
--   **Machine Learning Classification**: Uses a trained **Support Vector Machine (SVM)** (or similar high-performance classifiers) to evaluate domains based on **12 distinct features**.
-    -   **F1-F8**: Structural and lexical features (e.g., URL length, suspicious patterns, hyphens).
-    -   **F9-F12**: Certificate security features and metadata.
--   **Brand Similarity Detection**: Enhanced "F1" feature uses vector-based embedding and Levenshtein distance to detect typosquatting and visual look-alikes of popular brands.
--   **Campaign Detection**: Automatically clusters related phishing domains into "campaigns" based on time windows and similarity heuristics, catching large-scale attacks.
--   **Risk Scoring**: Classifies domains into 5 granular risk levels:
-    1.  **Legitimate** (0-20%)
-    2.  **Potential** (20-40%)
-    3.  **Likely** (40-60%)
-    4.  **Suspicious** (60-80%)
-    5.  **Highly Suspicious** (80-100%)
+- **Accuracy:** 92.18%
+- **Precision:** 91.38%
+- **Recall:** 90.92%
+- **F1-Score:** 91.15%
+- **ROC-AUC:** 96.86%
 
-## 📊 Model Metrics
+## 🚀 Quick Start
 
-The core detection model (`phishhook_model_final.pkl`) achieves high performance on the UCI Phishing Dataset (augmented with certificate features):
+### Installation
 
-| Metric | Score | Matches |
-| :--- | :--- | :--- |
-| **Accuracy** | **88.01%** | Overall correctness of predictions |
-| **Precision** | **94.63%** | High confidence in flagged phishing sites (Low False Positives) |
-| **Recall** | **77.35%** | Ability to detect actual phishing attempts |
-| **F1 Score** | **85.12%** | Balanced performance metric |
-
-*> Note: Metrics are based on the latest evaluation on the test set (20% split).*
-
-## 🛠️ Usage
-
-### Prerequisites
-Install dependencies:
 ```bash
+# Clone repository
+git clone https://github.com/AhmarKamran09/Information-security.git
+cd Information-security
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 1. Start Real-Time Detection
-Run the server to start monitoring CertStream:
-```bash
-python3 serve.py --enable-campaign
-```
-Options:
--   `--enable-campaign`: Turn on campaign clustering.
--   `--output <file>`: Save detections to a JSON line file.
--   `--domain <domain>`: Test a specific domain string manually.
+### Usage
 
-### 2. Train/Retrain Model
-To train the model with improved features:
+**Evaluate Model:**
 ```bash
-python3 train_improved.py --dataset uci-ml-phishing-dataset.csv --plot-curves
+python scripts/evaluate.py
 ```
 
-### 3. Evaluate Model
-Generate a full performance report:
+**Train Model:**
 ```bash
-python3 evaluation.py --model phishhook_model_final.pkl
+python scripts/train.py
 ```
 
-## 📂 Project Structure
+**Run Web Interface:**
+```bash
+python web/web_server.py
+```
+Then open: http://localhost:5000
 
--   `serve.py`: Main entry point for real-time detection and server logic.
--   `train_improved.py`: Training script with enhanced feature engineering (brand embeddings).
--   `evaluation.py`: Model evaluation and reporting tools.
--   `campaign.py`: Logic for detecting and clustering phishing campaigns.
--   `features.py` & `cert_security.py`: Feature extraction modules.
--   `uci_mapper.py`: Helper to map UCI dataset features to Phish-Hook format.
+## 📁 Project Structure
+
+```
+phish-hook/
+├── models/              # Trained models
+│   └── phishhook_model.pkl
+├── data/                # Training datasets
+│   └── training_data.npz
+├── scripts/             # Training & evaluation scripts
+│   ├── train.py
+│   └── evaluate.py
+├── web/                 # Web interface
+│   ├── web_server.py
+│   └── index.html
+├── tests/               # Unit tests
+├── docs/                # Documentation
+├── features.py          # Feature extraction
+├── cert_security.py     # Certificate security features
+├── uci_mapper.py        # Dataset utilities
+└── requirements.txt     # Dependencies
+```
+
+## 🎯 Features
+
+### Domain Features (F1-F8)
+- F1: Brand Similarity Detection
+- F2: Subdomain Depth Analysis
+- F3: Free Certificate Authority Detection
+- F4: Suspicious TLD Detection
+- F5: Inner TLD in Subdomain
+- F6: Suspicious Keywords
+- F7: High Entropy Detection
+- F8: Hyphens in Subdomain
+
+### Certificate Security Features (F9-F12)
+- F9: SAN (Subject Alternative Names) Analysis
+- F10: Self-Signed Certificate Detection
+- F11: Validity Period Analysis
+- F12: Certificate Chain Validation
+
+## 🔬 Model Details
+
+- **Algorithm:** Random Forest Classifier
+- **Trees:** 200
+- **Features:** 12 (F1-F12)
+- **Training Samples:** 11,055
+- **Improvement:** +4.66% over baseline
+
+## 📈 Results
+
+```
+Confusion Matrix:
+                 Predicted
+                 Legit  Phishing
+  Actual Legit    1147      84
+  Actual Phish      89     891
+
+True Positives:  891 (correctly identified phishing)
+True Negatives:  1147 (correctly identified legitimate)
+False Positives: 84 (legitimate flagged as phishing)
+False Negatives: 89 (phishing missed)
+```
+
+## 🌐 Web Interface
+
+Beautiful, modern web interface for real-time phishing detection:
+- Instant URL analysis
+- Visual feature breakdown
+- Risk level assessment
+- Confidence scoring
+
+## 📝 License
+
+MIT License - see LICENSE file for details
+
+## 👥 Authors
+
+- Ahmar Kamran
+
+## 🙏 Acknowledgments
+
+Based on research from TU Graz phishing detection paper.

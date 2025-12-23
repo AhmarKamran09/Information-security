@@ -29,7 +29,7 @@ def evaluate_model():
     
     # Load data
     print("\nLoading data...")
-    data = np.load('uci_enhanced.npz')
+    data = np.load('../data/training_data.npz')
     X = data['X']
     y = data['y']
     
@@ -40,7 +40,7 @@ def evaluate_model():
     
     # Load model
     print("\nLoading model...")
-    with open('phishhook_model_final.pkl', 'rb') as f:
+    with open('../models/phishhook_model.pkl', 'rb') as f:
         model = pickle.load(f)
     
     print(f"  Model type: {type(model).__name__}")
@@ -194,8 +194,8 @@ if __name__ == '__main__':
     except FileNotFoundError as e:
         print(f"\n❌ Error: {e}")
         print("\nMake sure you have:")
-        print("  1. uci_enhanced.npz (run: python generate_features.py)")
-        print("  2. phishhook_model_final.pkl (run: python train_enhanced.py)")
+        print("  1. training_data.npz (run: python prepare_data.py)")
+        print("  2. phishhook_model.pkl (run: python train.py)")
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
